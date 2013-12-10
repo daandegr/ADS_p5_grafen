@@ -94,31 +94,38 @@ class Graph {
     }
 
     public void displayVertex(int v) {
-        System.out.println("to: "+vertexList[v].label);
+        System.out.println("to: " + vertexList[v].label);
     }
 
     public boolean knightTour(int depth, int v, int limit) {
         vertexList[v].wasVisited = true;
-
         theStack.push(v);
-
+        
+        boolean done;
+        
         if (depth < limit) {
-            for (int i = 0; i < vertexList.length; i++) {
-                if (vertexList[i].wasVisited == false && getAdjUnvisitedVertex(i, depth) != -1) {
-                    
-                    knightTour(depth + 1, getAdjUnvisitedVertex(i, depth), limit);
-                    vertexList[i].wasVisited = true;
 
-                } else if (!theStack.isEmpty()) {
-
-                    moveOrder[i] = theStack.pop();
-                    vertexList[v].wasVisited = false;
-
+            List<Integer> connections = getConnections(v);
+            int i = 0;
+            done = false;
+            while (i < connections.size() && !done) {
+                if (vertexList[connections.get(i)].wasVisited == false) {
+                    System.out.println("visited: " + vertexList[connections.get(i)].label);
+                    done = knightTour(depth + 1, connections.get(i), limit);
+                    i++;
                 }
             }
+            if (!done) {
+                System.out.println("popped: " + theStack.peek());
+                theStack.pop();
+                vertexList[v].wasVisited = false;
+            }
+        } else {
+            done = true;
         }
+        
 
-        return true;
+        return done;
     }
 
     public void printMoveOrder() {
@@ -134,23 +141,52 @@ class Graph {
         //displayVertex(start); // display it
         theStack.push(start); // push it
         int depth = 0;
+        int lastVisited = start;
+
         while (!theStack.isEmpty() && depth != vertexList.length) // until stack empty,
         {
 // get an unvisited vertex adjacent to stack top
-            int v = getAdjUnvisitedVertex(theStack.peek(), depth);
+            int v = getAdjUnvisitedVertex(theStack.peek());
             depth++;
             if (v == -1) // if no such vertex,
             {
-                vertexList[theStack.peek()].wasVisited = false;
+//                vertexList[theStack.peek()].wasVisited = false;
+//                theStack.pop();
+//                depth--;
+                vertexList[lastVisited].wasVisited = false;
                 theStack.pop();
-                depth--;
+                System.out.println("Go back to: " + theStack.peek());
+                int backTo = theStack.peek();
+                int newDestination = getNextAdjVertex(backTo, lastVisited);
+                lastVisited = newDestination;
+                while (newDestination == -1) {
+                    theStack.pop();
+                    backTo = theStack.peek();
+                    System.out.println("Go back to: " + backTo);
+                    newDestination = getNextAdjVertex(backTo, lastVisited);
+                    lastVisited = newDestination;
+                    if (newDestination != -1) {
+                        vertexList[newDestination].wasVisited = false;
+                    }
+                }
+                System.out.println("New Destination " + newDestination);
+                vertexList[newDestination].wasVisited = true;
+                lastVisited = newDestination;
+                System.out.println("Visited: " + newDestination);
+                theStack.push(newDestination);
+
+
 
             } else // if it exists,
             {
-                vertexList[v].wasVisited = true; // mark it
-                displayVertex(v); // display it
-                theStack.push(v); // push it 
-                //depth++;
+//                vertexList[v].wasVisited = true; // mark it
+//                displayVertex(v); // display it
+//                theStack.push(v); // push it 
+//                //depth++;
+                vertexList[v].wasVisited = true;
+                lastVisited = v;
+                System.out.println("Visited: " + v);
+                theStack.push(v);
             }
         } // end while
 // stack is empty, so we're done
@@ -160,9 +196,28 @@ class Graph {
         }
     } // end dfs
 
+    public int getNextAdjVertex(int currentVertex, int vertexICameFrom) {
+        for (int j = 0; j < nVerts; j++) {
+            if (adjMat[currentVertex][j] == 1 && vertexList[j].label != vertexICameFrom && vertexList[j].wasVisited == false) {
+                return j;
+            }
+        }
+        return -1;
+    }
+
+    public List<Integer> getConnections(int v) {
+        List<Integer> connections = new ArrayList<>();
+        for (int j = 0; j < nVerts; j++) {
+            if (adjMat[v][j] == 1 && vertexList[j].wasVisited == false) {
+                connections.add(j);
+            }
+        }
+        return connections;
+    }
+
     // returns an unvisited vertex adj to v
-    public int getAdjUnvisitedVertex(int v, int depth) {
-        for (int j = depth; j < nVerts; j++) {
+    public int getAdjUnvisitedVertex(int v) {
+        for (int j = 0; j < nVerts; j++) {
             if (adjMat[v][j] == 1 && vertexList[j].wasVisited == false) {
                 return j;
             }
@@ -183,7 +238,7 @@ class DFSApp {
         fillBoard();
         fillGraph();
         printBoard();
-//        graph.knightTour(0, 0, 25);
+        graph.knightTour(0, 0, 25);
 //        graph.printMoveOrder();
 
 //        theGraph.addVertex(1); // 0 (start for dfs)
@@ -196,9 +251,9 @@ class DFSApp {
 //        theGraph.addEdge(0, 3); // AD
 //        theGraph.addEdge(3, 4); // DE
 
-        
-        graph.dfs(0); // depth-first search
-        System.out.println();
+
+//        graph.dfs(0); // depth-first search
+//        System.out.println();
     } // end main()
 
     public static void fillGraph() {
@@ -220,13 +275,12 @@ class DFSApp {
         for (int i = 0; i < board.length; i++) {
             System.out.println();
             for (int j = 0; j < board.length; j++) {
-                if(Integer.toString(v).length() == 1){
+                if (Integer.toString(v).length() == 1) {
                     System.out.print(v + "    ");
-                }
-                else{
+                } else {
                     System.out.print(v + "   ");
                 }
-                
+
                 v++;
             }
             System.out.println();
