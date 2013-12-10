@@ -42,6 +42,17 @@ class StackX {
     {
         return (top == -1);
     }
+    
+    public int getTop(){
+        return top;
+    }
+    
+    public void printStack(){
+        for(int i = 0; i < top+1; i++){
+            System.out.print(st[i] + ", ");
+        }
+        System.out.println();
+    }
 } // end class StackX
 ////////////////////////////////////////////////////////////////
 
@@ -66,6 +77,7 @@ class Graph {
     private int nVerts; // current number of vertices
     private StackX theStack;
     private int[] moveOrder;
+    private int tours;
 
     public Graph() // constructor
     {
@@ -80,6 +92,7 @@ class Graph {
                 adjMat[j][k] = 0;
             }
         }
+        tours = 0;
         theStack = new StackX();
         moveOrder = new int[MAX_VERTS];
     } // end constructor
@@ -102,28 +115,35 @@ class Graph {
         theStack.push(v);
         
         boolean done;
-        
+
         if (depth < limit) {
 
             List<Integer> connections = getConnections(v);
+            
             int i = 0;
             done = false;
             while (i < connections.size() && !done) {
                 if (vertexList[connections.get(i)].wasVisited == false) {
-                    System.out.println("visited: " + vertexList[connections.get(i)].label);
+                    //System.out.println("visited: " + vertexList[connections.get(i)].label);
                     done = knightTour(depth + 1, connections.get(i), limit);
                     i++;
                 }
             }
             if (!done) {
-                System.out.println("popped: " + theStack.peek());
+                //System.out.println("popped: " + theStack.peek());
+                if(theStack.getTop() == limit-1){
+                    if(tours == 0){
+                        theStack.printStack();
+                    }
+                    tours++;                    
+                }
                 theStack.pop();
                 vertexList[v].wasVisited = false;
             }
         } else {
             done = true;
         }
-        
+
 
         return done;
     }
@@ -214,6 +234,10 @@ class Graph {
         }
         return connections;
     }
+    
+    public void printTours(){
+        System.out.println("tours: " + tours);
+    }
 
     // returns an unvisited vertex adj to v
     public int getAdjUnvisitedVertex(int v) {
@@ -238,22 +262,12 @@ class DFSApp {
         fillBoard();
         fillGraph();
         printBoard();
-        graph.knightTour(0, 0, 25);
-//        graph.printMoveOrder();
-
-//        theGraph.addVertex(1); // 0 (start for dfs)
-//        theGraph.addVertex(2); // 1
-//        theGraph.addVertex(3); // 2
-//        theGraph.addVertex(4); // 3
-//        theGraph.addVertex(5); // 4
-//        theGraph.addEdge(0, 1); // AB
-//        theGraph.addEdge(1, 2); // BC
-//        theGraph.addEdge(0, 3); // AD
-//        theGraph.addEdge(3, 4); // DE
-
-
-//        graph.dfs(0); // depth-first search
-//        System.out.println();
+        
+        long start = System.currentTimeMillis();
+        graph.knightTour(0, 20, 25);
+        long end = System.currentTimeMillis();
+        graph.printTours();
+        System.out.println("Calculating tours took "+(end-start)+" ms.");
     } // end main()
 
     public static void fillGraph() {
@@ -285,6 +299,7 @@ class DFSApp {
             }
             System.out.println();
         }
+        System.out.println();
     }
 
     public static void fillBoard() {
